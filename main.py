@@ -1,9 +1,13 @@
 import os
+import logging
 from glob import glob
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+
+logging.basicConfig(level=logging.INFO)
 
 bot_token = "" #токен бота
 adminid = 123456789 #айди админа(без кавычек)
@@ -11,6 +15,7 @@ adminid = 123456789 #айди админа(без кавычек)
 storage = MemoryStorage()
 bot = Bot(bot_token)
 dp = Dispatcher(bot, storage=storage)
+dp.middleware.setup(LoggingMiddleware())
 
 class UserState(StatesGroup):
     photo = State()
