@@ -17,6 +17,9 @@ bot = Bot(bot_token)
 dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
 
+list = ['CON', 'PRN', 'AUX', 'NUL', 'COM0', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT0', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9']
+list_2 = set('<>:"/\|?*')
+
 class UserState(StatesGroup):
     photo = State()
     rar = State()
@@ -60,22 +63,28 @@ async def get_any(message: types.Message, state:FSMContext):
 
 @dp.message_handler(state=UserState.name)
 async def get_username(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['name'] = message.text
+    if set(message.text) & list_2:
+        await message.answer("Вы ввели запрещенный символ")
+    else:
+        if message.text in list:
+            await message.answer("Вы ввели запрещенное слово")
+        else:
+            async with state.proxy() as data:
+                data['name'] = message.text
 
-    photo_extension = os.path.splitext(data['photo'].file_path)[1]#сохранение фото
-    photo_src = "tmp\\" + data['photo'].file_id + photo_extension
-    await data['photo'].download(destination_file=photo_src)
+            photo_extension = os.path.splitext(data['photo'].file_path)[1]#сохранение фото
+            photo_src = "tmp\\" + data['photo'].file_id + photo_extension
+            await data['photo'].download(destination_file=photo_src)
 
-    file_extention = os.path.splitext(data['rar'].file_path)[1]#сохранение архива
-    file_src = "tmp\\" + data['rar'].file_id + file_extention
-    await data['rar'].download(destination_file=file_src)
-            
-    os.system(f"copy /b {photo_src}+{file_src} tmp\\{data['name'] + photo_extension}") #создание архива
+            file_extention = os.path.splitext(data['rar'].file_path)[1]#сохранение архива
+            file_src = "tmp\\" + data['rar'].file_id + file_extention
+            await data['rar'].download(destination_file=file_src)
+                        
+            os.system(f"copy /b {photo_src}+{file_src} tmp\\{data['name'] + photo_extension}") #создание архива
 
-    file = open("tmp\\" + data['name'] + photo_extension, "rb")#отправка архива
-    await bot.send_document(message.chat.id, file)
-    await state.finish()
+            file = open("tmp\\" + data['name'] + photo_extension, "rb")#отправка архива
+            await bot.send_document(message.chat.id, file)
+            await state.finish()
 
 
 if __name__ == '__main__':
